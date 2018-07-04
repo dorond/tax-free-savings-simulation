@@ -1,14 +1,14 @@
 import numpy as np
 import pandas as pd
 
-time_horizon = 26
+# time_horizon = 26
 
-r_return = 0.0993
-lump_sum = 2000
-monthly = 200
+# r_return = 0.0993
+# lump_sum = 2000
+# monthly = 200
 
-investment = np.fv(rate=r_return/12, nper=time_horizon*12, pmt=monthly, pv=lump_sum, when='end')
-print("Investment will yield a total of R" + str(round(-investment, 2)) + " in " + str(time_horizon) + " years")
+# investment = np.fv(rate=r_return/12, nper=time_horizon*12, pmt=monthly, pv=lump_sum, when='end')
+# print("Investment will yield a total of R" + str(round(-investment, 2)) + " in " + str(time_horizon) + " years")
 
 time_horizons = np.array([i for i in range(1, 51)])
 return_rates = np.array([0.0721, 0.0993, 0.1218, 0.1659, 0.18])
@@ -45,13 +45,16 @@ def is_valid_investment_params(row):
     
     #num_periods = 0   
 
+# numpy meshgrid allows us to create a matrix of all combinations of our input arrays
 investment_options = np.stack(np.meshgrid(time_horizons, return_rates, lump_sums, monthly_contribs), -1).reshape(-1, 4)
 
+
 df = pd.DataFrame(investment_options, columns=["Time_Horizon", "Return_Rate", "Lump_Sum", "Monthly_Contrib"], dtype='float64')
-df["Valid_Investment"] = df.apply(is_valid_investment_params, axis=1)
-df.to_csv('taxfree_investment_options.csv', index=False)   
 
+# adding too column which indicates whether this combo of params is a valid tax-free investment
+df["Valid_Investment"] = df.apply(is_valid_investment_params, axis=1)   
 
-#investments = np.fv(rate=return_rates/12, nper=time_horizons*12, pmt=monthly_contribs, pv=lump_sums, when='end')
-investments = np.round(np.fv(rate=return_rates/12, nper=time_horizon*12, pmt=monthly, pv=lump_sum, when='end') ,2)
-print(-investments)
+# calculaing the future value using numpy fv() 
+df["Future_Value"] = -np.round(np.fv(df["Return_Rate"]/12, nper=df["Time_Horizon"]*12, pmt=df["Monthly_Contrib"], pv=df["Lump_Sum"], when='end'), 2)
+
+df.to_csv('taxfree_investment_options.csv', index=False)
